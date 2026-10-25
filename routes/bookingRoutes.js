@@ -1,4 +1,3 @@
-
 import express from "express";
 
 import {
@@ -7,7 +6,7 @@ import {
   cancelBooking,
   checkAvailability,
   getAllBookings,
-  getAvailableSlots
+  getAvailableSlots,
 } from "../controllers/bookingController.js";
 
 import {
@@ -20,55 +19,25 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Admin: get all appointments
-router.get(
-  "/admin/all",
-  authMiddleware,
-  adminMiddleware,
-  getAllBookings
-);
+router.get("/admin/all", authMiddleware, adminMiddleware, getAllBookings);
 
-router.get(
-  "/slots",
-  authMiddleware,
-  getAvailableSlots
-);
+router.get("/slots", authMiddleware, getAvailableSlots);
 
-// Admin: update an existing appointment's status
 router.patch(
   "/admin/:id/status",
   authMiddleware,
   adminMiddleware,
-  updateBookingStatus
+  updateBookingStatus,
 );
 
-// Create an appointment after explicit confirmation
-router.post(
-  "/confirm",
-  authMiddleware,
-  confirmAppointment
-);
+router.post("/confirm", authMiddleware, confirmAppointment);
 
-// Check appointment availability
-router.get(
-  "/availability",
-  authMiddleware,
-  checkAvailability
-);
+router.get("/availability", authMiddleware, checkAvailability);
 
-// Standard booking routes
 router.post("/", authMiddleware, createBooking);
 
-router.get(
-  "/my",
-  authMiddleware,
-  getMyBookings
-);
+router.get("/my", authMiddleware, getMyBookings);
 
-router.patch(
-  "/:id/cancel",
-  authMiddleware,
-  cancelBooking
-);
+router.patch("/:id/cancel", authMiddleware, cancelBooking);
 
 export default router;

@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
 
-// Create a new appointment
 export const createBooking = async (req, res) => {
   try {
     const { serviceId, startTime, notes } = req.body;
@@ -38,7 +37,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Find the requested active service
     const service = await Service.findOne({
       _id: serviceId,
       isActive: true,
@@ -51,7 +49,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Calculate the end time from the service duration
+    
     const end = new Date(
       start.getTime() + service.duration * 60 * 1000
     );
@@ -96,7 +94,6 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// Get appointments belonging to the logged-in user
 export const getMyBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({
@@ -120,7 +117,7 @@ export const getMyBookings = async (req, res) => {
   }
 };
 
-// Cancel an appointment belonging to the logged-in user
+
 export const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -282,7 +279,7 @@ export const getAllBookings = async (req, res) => {
   }
 };
 
-// Get available appointment slots for a service on a selected date
+
 
 export const getAvailableSlots = async (req, res) => {
   try {
@@ -312,7 +309,7 @@ export const getAvailableSlots = async (req, res) => {
 
     const [year, month, day] = date.split("-").map(Number);
 
-    // Use the server's local timezone for salon hours.
+
     const dayStart = new Date(year, month - 1, day);
     const dayEnd = new Date(year, month - 1, day + 1);
 
@@ -356,8 +353,7 @@ export const getAvailableSlots = async (req, res) => {
     // Generate a possible start time every 15 minutes.
     const SLOT_INTERVAL = 15;
 
-    // Get bookings across ALL services because this salon
-    // currently has one shared scheduling resource.
+    // Get bookings across ALL services 
     const bookings = await Booking.find({
       status: { $in: ["Pending", "Confirmed"] },
       startTime: { $lt: dayEnd },
@@ -381,10 +377,9 @@ export const getAvailableSlots = async (req, res) => {
         start.getTime() + service.duration * 60 * 1000
       );
 
-      // Do not offer past appointment times.
+    
       if (start <= now) continue;
 
-      // Check the entire requested service duration.
       const isBooked = bookings.some((booking) => {
         const existingStart = new Date(booking.startTime);
         const existingEnd = new Date(booking.endTime);

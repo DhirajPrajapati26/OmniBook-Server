@@ -152,9 +152,6 @@ const lastMatch = (text, regex) => {
   return matches.length ? matches[matches.length - 1] : null;
 };
 
-// Parses explicit dates and times. The latest date/time in the supplied
-
-// booking context wins, so a correction can replace an earlier choice.
 
 const parseAppointmentDateTime = (input) => {
   const text = input.toLowerCase();
@@ -186,7 +183,7 @@ const parseAppointmentDateTime = (input) => {
 
   const iso = lastMatch(text, /\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/g);
 
-  // Indian date format: DD/MM/YYYY
+
   const slash = lastMatch(text, /\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/g);
 
   const named = lastMatch(
@@ -214,7 +211,7 @@ const parseAppointmentDateTime = (input) => {
     /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/g,
   );
 
-  // Choose the date expression mentioned last.
+  
 
   const dateCandidates = [
     relative && {
@@ -304,8 +301,7 @@ const parseAppointmentDateTime = (input) => {
 
       let year = Number(match[3] || today.year);
 
-      // If the date without a year has already passed,
-      // assume the user means the next occurrence.
+     
       if (!match[3]) {
         const endOfDay = getIndiaDate(year, month, day, 23, 59);
 
@@ -329,7 +325,7 @@ const parseAppointmentDateTime = (input) => {
         Date.UTC(today.year, today.month - 1, today.day),
       ).getUTCDay();
 
-      // A bare weekday means its next occurrence.
+    
       let daysAhead = (weekdays[match[1]] - currentWeekday + 7) % 7;
 
       if (daysAhead === 0) {
@@ -341,7 +337,6 @@ const parseAppointmentDateTime = (input) => {
     }
   }
 
-  // Supports 5pm, 5 pm, 5:30 pm, and 17:00.
   const timeCandidates = [
     ...text.matchAll(
       /\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)\b|\b([01]?\d|2[0-3]):([0-5]\d)\b/gi,
@@ -503,7 +498,7 @@ const getBookingContext = (conversation, currentMessage, services) => {
 
   contextMessages.push(currentMessage);
 
-  // Return the conversation context for parsing the appointment request.
+  
   return contextMessages.join(" ");
 };
 
@@ -593,7 +588,7 @@ export const chatWithAI = async (req, res) => {
       );
     }
 
-    // Cancellation flow.
+    // Cancellation 
 
     if (isCancellationRequest(userMessage)) {
       clearPendingBooking(conversation);
@@ -825,7 +820,7 @@ export const chatWithAI = async (req, res) => {
       }
     }
 
-    // Only create a booking when the user confirms a prepared request.
+   
 
     if (pending.awaitingConfirmation) {
       if (isNegativeConfirmation(userMessage)) {
@@ -960,7 +955,7 @@ conversation.awaitingAnotherBooking = true;
       ) {
         clearPendingBooking(conversation);
       } else {
-        // Allow the user to correct the date/time instead of confirming.
+       
 
         const parsedCorrection = parseAppointmentDateTime(userMessage);
 
@@ -1059,9 +1054,6 @@ conversation.awaitingAnotherBooking = true;
         );
       }
 
-      // A new explicit booking request starts a fresh request and discards
-
-      // any old date/time. A continuation can combine details across turns.
 
       const contextText =
         isBookingContinuation && !isBookingRequest(userMessage)
@@ -1208,8 +1200,7 @@ conversation.awaitingAnotherBooking = true;
       );
     }
 
-    // Service information and general questions are handled separately.
-
+  
    
 if (mentionedService) {
   conversation.pendingBooking.service = mentionedService._id;

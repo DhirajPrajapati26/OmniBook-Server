@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
 
-// Create a booking after explicit confirmation
+
 
 export const confirmAppointment = async (req, res) => {
   try {
@@ -42,7 +42,7 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
-    // Use the server's local timezone for salon business hours.
+
     const startMinutes =
       start.getHours() * 60 + start.getMinutes();
 
@@ -94,7 +94,7 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
-    // Calculate the actual end time for this service.
+
     const end = new Date(
       start.getTime() + service.duration * 60 * 1000
     );
@@ -158,7 +158,7 @@ export const confirmAppointment = async (req, res) => {
   }
 };
 
-// Update an existing appointment status (admin only)
+// Update an existing appointment status 
 
 export const updateBookingStatus = async (req, res) => {
   try {

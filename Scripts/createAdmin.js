@@ -9,9 +9,9 @@ import User from "../models/User.js";
 const createAdmin = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-
-    const email = "admin@example.com";
-    const password = "AdminPass123!";
+    
+const email = process.env.ADMIN_EMAIL;
+const password = process.env.ADMIN_PASSWORD;
 
     const existingUser = await User.findOne({ email });
 
