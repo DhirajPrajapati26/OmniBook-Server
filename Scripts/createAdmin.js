@@ -24,7 +24,7 @@ const password = process.env.ADMIN_PASSWORD;
 
       await User.create({
         name: "Admin",
-        email,
+      email: process.env.ADMIN_EMAIL,
         password: hashedPassword,
         role: "admin",
       });
