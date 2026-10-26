@@ -3,8 +3,6 @@ import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
 
-
-
 export const confirmAppointment = async (req, res) => {
   try {
     const { serviceId, startTime, confirmed, notes } = req.body;
@@ -30,6 +28,7 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
+    // Parse the ISO timestamp sent by the frontend.
     const start = new Date(startTime);
 
     if (
@@ -42,14 +41,28 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
+    // Extract appointment time explicitly in Indian Standard Time.
+    const timeParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(start);
 
-    const startMinutes =
-      start.getHours() * 60 + start.getMinutes();
+    const hours = Number(
+      timeParts.find((part) => part.type === "hour").value
+    );
+
+    const minutes = Number(
+      timeParts.find((part) => part.type === "minute").value
+    );
+
+    const startMinutes = hours * 60 + minutes;
 
     // Only allow 15-minute start intervals.
     if (
-      start.getSeconds() !== 0 ||
-      start.getMilliseconds() !== 0 ||
+      start.getUTCSeconds() !== 0 ||
+      start.getUTCMilliseconds() !== 0 ||
       startMinutes % 15 !== 0
     ) {
       return res.status(400).json({
@@ -58,7 +71,7 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
-    // Salon hours: 9:00 AM to 6:00 PM.
+    // Salon hours: 9:00 AM to 6:00 PM IST.
     const OPEN_MINUTES = 9 * 60;
     const CLOSE_MINUTES = 18 * 60;
 
@@ -94,31 +107,22 @@ export const confirmAppointment = async (req, res) => {
       });
     }
 
-
     const end = new Date(
       start.getTime() + service.duration * 60 * 1000
     );
 
-    const endMinutes =
-      end.getHours() * 60 + end.getMinutes();
+    // Calculate the ending time using IST minutes.
+    const endMinutes = startMinutes + service.duration;
 
-    // Prevent appointments from extending beyond closing
-    // or crossing into another calendar day.
-    if (
-      end.toDateString() !== start.toDateString() ||
-      endMinutes > CLOSE_MINUTES ||
-      (endMinutes === CLOSE_MINUTES &&
-        (end.getSeconds() !== 0 ||
-          end.getMilliseconds() !== 0))
-    ) {
+    // Prevent appointments from finishing after 6:00 PM.
+    if (endMinutes > CLOSE_MINUTES) {
       return res.status(400).json({
         success: false,
         message: "The appointment must finish by 6 PM.",
       });
     }
 
-    // Check overlaps across all services because the salon
-    // currently has one shared scheduling resource.
+    // Prevent overlapping appointments across all services.
     const conflict = await Booking.findOne({
       status: { $in: ["Pending", "Confirmed"] },
       startTime: { $lt: end },
@@ -158,8 +162,7 @@ export const confirmAppointment = async (req, res) => {
   }
 };
 
-// Update an existing appointment status 
-
+// Update an existing appointment status.
 export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
