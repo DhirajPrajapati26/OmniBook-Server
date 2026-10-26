@@ -20,13 +20,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
-   const hours = Math.floor(minutes / 60);
-const mins = minutes % 60;
-
-const start = new Date(
-  Date.UTC(year, month - 1, day, hours, mins) -
-    330 * 60 * 1000
-);
+ const start = new Date(startTime);
 
     if (Number.isNaN(start.getTime())) {
       return res.status(400).json({
@@ -367,11 +361,17 @@ export const getAvailableSlots = async (req, res) => {
       minutes + service.duration <= CLOSE_MINUTES;
       minutes += SLOT_INTERVAL
     ) {
-      const start = new Date(dayStart);
-      start.setMinutes(minutes, 0, 0);
+  const hours = Math.floor(minutes / 60);
+const mins = minutes % 60;
 
-      const end = new Date(start.getTime() + service.duration * 60 * 1000);
+const start = new Date(
+  Date.UTC(year, month - 1, day, hours, mins) -
+    330 * 60 * 1000
+);
 
+const end = new Date(
+  start.getTime() + service.duration * 60 * 1000
+);
       if (start <= now) continue;
 
       const isBooked = bookings.some((booking) => {
@@ -383,11 +383,12 @@ export const getAvailableSlots = async (req, res) => {
 
       slots.push({
         startTime: start.toISOString(),
-        time: start.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }),
+      time: start.toLocaleTimeString("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+}),
         available: !isBooked,
       });
     }
