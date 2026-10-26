@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Service from "../models/Service.js";
@@ -21,7 +20,13 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    const start = new Date(startTime);
+   const hours = Math.floor(minutes / 60);
+const mins = minutes % 60;
+
+const start = new Date(
+  Date.UTC(year, month - 1, day, hours, mins) -
+    330 * 60 * 1000
+);
 
     if (Number.isNaN(start.getTime())) {
       return res.status(400).json({
@@ -49,10 +54,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    
-    const end = new Date(
-      start.getTime() + service.duration * 60 * 1000
-    );
+    const end = new Date(start.getTime() + service.duration * 60 * 1000);
 
     // Check whether another booking overlaps this time
     const conflictingBooking = await Booking.findOne({
@@ -117,7 +119,6 @@ export const getMyBookings = async (req, res) => {
   }
 };
 
-
 export const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,7 +174,6 @@ export const cancelBooking = async (req, res) => {
   }
 };
 
-
 export const checkAvailability = async (req, res) => {
   try {
     const { serviceId, startTime } = req.query;
@@ -220,9 +220,7 @@ export const checkAvailability = async (req, res) => {
       });
     }
 
-    const end = new Date(
-      start.getTime() + service.duration * 60 * 1000
-    );
+    const end = new Date(start.getTime() + service.duration * 60 * 1000);
 
     const conflictingBooking = await Booking.findOne({
       service: serviceId,
@@ -256,7 +254,6 @@ export const checkAvailability = async (req, res) => {
   }
 };
 
-
 export const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
@@ -278,8 +275,6 @@ export const getAllBookings = async (req, res) => {
     });
   }
 };
-
-
 
 export const getAvailableSlots = async (req, res) => {
   try {
@@ -309,14 +304,19 @@ export const getAvailableSlots = async (req, res) => {
 
     const [year, month, day] = date.split("-").map(Number);
 
+    // India Standard Time (IST) is UTC+5:30.
+    const IST_OFFSET = 330 * 60 * 1000;
 
-    const dayStart = new Date(year, month - 1, day);
-    const dayEnd = new Date(year, month - 1, day + 1);
+    const dayStart = new Date(Date.UTC(year, month - 1, day) - IST_OFFSET);
+
+    const dayEnd = new Date(Date.UTC(year, month - 1, day + 1) - IST_OFFSET);
+
+    const calendarDate = new Date(Date.UTC(year, month - 1, day));
 
     if (
-      dayStart.getFullYear() !== year ||
-      dayStart.getMonth() !== month - 1 ||
-      dayStart.getDate() !== day
+      calendarDate.getUTCFullYear() !== year ||
+      calendarDate.getUTCMonth() !== month - 1 ||
+      calendarDate.getUTCDate() !== day
     ) {
       return res.status(400).json({
         success: false,
@@ -336,10 +336,7 @@ export const getAvailableSlots = async (req, res) => {
       });
     }
 
-    if (
-      !Number.isFinite(service.duration) ||
-      service.duration <= 0
-    ) {
+    if (!Number.isFinite(service.duration) || service.duration <= 0) {
       return res.status(400).json({
         success: false,
         message: "Service duration is invalid.",
@@ -353,7 +350,7 @@ export const getAvailableSlots = async (req, res) => {
     // Generate a possible start time every 15 minutes.
     const SLOT_INTERVAL = 15;
 
-    // Get bookings across ALL services 
+    // Get bookings across ALL services
     const bookings = await Booking.find({
       status: { $in: ["Pending", "Confirmed"] },
       startTime: { $lt: dayEnd },
@@ -373,21 +370,15 @@ export const getAvailableSlots = async (req, res) => {
       const start = new Date(dayStart);
       start.setMinutes(minutes, 0, 0);
 
-      const end = new Date(
-        start.getTime() + service.duration * 60 * 1000
-      );
+      const end = new Date(start.getTime() + service.duration * 60 * 1000);
 
-    
       if (start <= now) continue;
 
       const isBooked = bookings.some((booking) => {
         const existingStart = new Date(booking.startTime);
         const existingEnd = new Date(booking.endTime);
 
-        return (
-          existingStart < end &&
-          existingEnd > start
-        );
+        return existingStart < end && existingEnd > start;
       });
 
       slots.push({
