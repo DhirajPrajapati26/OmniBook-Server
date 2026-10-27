@@ -446,19 +446,54 @@ const replyWithConversation = async (
   });
 };
 
+
+const stringSimilarity = require("string-similarity");
+
 const findServiceFromMessage = (message, services) => {
-  const normalizedMessage = message.toLowerCase();
+  const normalizedMessage = normalize(message);
 
-  return (
-    services
+  // First, prefer an exact service-name match.
+  const exactMatch = services
+    .filter((service) =>
+      normalizedMessage.includes(normalize(service.name))
+    )
+    .sort((a, b) => b.name.length - a.name.length)[0];
 
-      .filter((service) =>
-        normalizedMessage.includes(service.name.toLowerCase()),
-      )
+  if (exactMatch) return exactMatch;
 
-      .sort((a, b) => b.name.length - a.name.length)[0] || null
-  );
+  // Next, check individual words for likely spelling mistakes.
+  const words = normalizedMessage.split(/\s+/);
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const service of services) {
+    const serviceName = normalize(service.name);
+    const serviceWords = serviceName.split(/\s+/);
+
+    for (const word of words) {
+      // Avoid matching very short words accidentally.
+      if (word.length < 4) continue;
+
+      for (const serviceWord of serviceWords) {
+        if (serviceWord.length < 4) continue;
+
+        const score = stringSimilarity.compareTwoStrings(
+          word,
+          serviceWord
+        );
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = service;
+        }
+      }
+    }
+  }
+
+  // Only accept sufficiently close spelling matches.
+  return bestScore >= 0.65 ? bestMatch : null;
 };
+
 
 const formatServices = (services) =>
   services
