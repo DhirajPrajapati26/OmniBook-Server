@@ -447,7 +447,6 @@ const replyWithConversation = async (
 };
 
 
-const stringSimilarity = require("string-similarity");
 
 const findServiceFromMessage = (message, services) => {
   const normalizedMessage = normalize(message);
